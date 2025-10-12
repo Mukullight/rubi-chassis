@@ -1,5 +1,421 @@
 The [dataset_info.json](dataset_info.json) contains all available datasets. If you are using a custom dataset, please **make sure** to add a *dataset description* in `dataset_info.json` and specify `dataset: dataset_name` before training to use it.
 
+The [data]()
+The meta data for each of the in
+
+
+
+
+# Dataset Configuration Documentation
+
+This document describes the metadata structure used for dataset configuration in LLaMA Factory. The configuration file defines various datasets that can be used for training, fine-tuning, and evaluation of language models.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Dataset Categories](#dataset-categories)
+- [Configuration Structure](#configuration-structure)
+- [Field Definitions](#field-definitions)
+- [Dataset Types](#dataset-types)
+- [Examples](#examples)
+
+---
+
+## Overview
+
+The dataset configuration is stored as a JSON object where each key represents a unique dataset identifier, and the value contains the metadata describing how to load and process that dataset.
+
+---
+
+## Dataset Categories
+
+Datasets are organized into several categories:
+
+### 1. **Demo Datasets**
+Small demonstration datasets for testing and examples:
+- `identity`, `alpaca_en_demo`, `alpaca_zh_demo`, `glaive_toolcall_en_demo`, etc.
+
+### 2. **Instruction Fine-tuning Datasets**
+Datasets for supervised fine-tuning with instruction-response pairs:
+- `alpaca_en`, `alpaca_gpt4_en`, `belle_2m`, `lima`, `open_platypus`, etc.
+
+### 3. **Multimodal Datasets**
+Datasets containing images, audio, or video:
+- `llava_1k_en`, `pokemon_cap`, `mllm_pt_demo`, etc.
+
+### 4. **Preference Datasets (DPO/RLHF)**
+Datasets for preference-based training:
+- `dpo_en_demo`, `ultrafeedback`, `nectar_rm`, `orca_pairs`, etc.
+
+### 5. **KTO Datasets**
+Datasets formatted for Kahneman-Tversky Optimization:
+- `kto_en_demo`, `kto_mix_en`, `ultrafeedback_kto`
+
+### 6. **Pretraining Datasets**
+Large-scale text corpora for pretraining:
+- `wikipedia_en`, `pile`, `fineweb`, `the_stack`, etc.
+
+### 7. **Localized Datasets**
+Datasets in specific languages (German, Chinese, etc.):
+- `oasst_de`, `dolly_15k_de`, `alpaca_zh`, etc.
+
+---
+
+## Configuration Structure
+
+Each dataset entry can contain the following fields:
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `file_name` | string | Local file name (for file-based datasets) |
+| `hf_hub_url` | string | Hugging Face Hub dataset identifier |
+| `ms_hub_url` | string | ModelScope Hub dataset identifier |
+| `om_hub_url` | string | OpenModelHub dataset identifier |
+
+**Note:** At least one of the above fields must be present.
+
+### Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `formatting` | string | Data format (e.g., `"sharegpt"`) |
+| `columns` | object | Mapping of standard field names to dataset column names |
+| `tags` | object | Mapping of role/content tags for conversational data |
+| `ranking` | boolean | Whether dataset contains ranked responses (for DPO/RLHF) |
+| `split` | string | Dataset split to use (e.g., `"train"`, `"validation"`) |
+| `subset` | string | Dataset subset/configuration name |
+| `folder` | string | Subfolder within the dataset |
+
+---
+
+## Field Definitions
+
+### `formatting`
+
+Specifies the data format. Common values:
+- `"sharegpt"` - ShareGPT conversation format
+- (default) - Standard instruction format
+
+### `columns`
+
+Maps standard field names to dataset-specific column names:
+
+```json
+{
+  "prompt": "instruction",      // User input/question
+  "response": "output",          // Model response
+  "system": "system_prompt",     // System message
+  "messages": "conversations",   // Full conversation
+  "tools": "tools",              // Tool/function definitions
+  "images": "images",            // Image paths/URLs
+  "videos": "videos",            // Video paths/URLs
+  "audios": "audios",            // Audio paths/URLs
+  "chosen": "chosen",            // Preferred response (DPO)
+  "rejected": "rejected",        // Rejected response (DPO)
+  "kto_tag": "label"             // KTO label (true/false)
+}
+```
+
+### `tags`
+
+Defines role and content tags for conversational data:
+
+```json
+{
+  "role_tag": "role",            // Field containing role identifier
+  "content_tag": "content",      // Field containing message content
+  "user_tag": "user",            // Value indicating user role
+  "assistant_tag": "assistant",  // Value indicating assistant role
+  "system_tag": "system"         // Value indicating system role
+}
+```
+
+### `ranking`
+
+Set to `true` for datasets containing preference pairs (chosen vs rejected responses). Used for:
+- Direct Preference Optimization (DPO)
+- Reward Modeling (RM)
+- Reinforcement Learning from Human Feedback (RLHF)
+
+---
+
+## Dataset Types
+
+### Standard Instruction Format
+
+Simple prompt-response pairs:
+
+```json
+{
+  "alpaca_en": {
+    "hf_hub_url": "llamafactory/alpaca_en",
+    "columns": {
+      "prompt": "instruction",
+      "response": "output"
+    }
+  }
+}
+```
+
+### ShareGPT Conversational Format
+
+Multi-turn conversations:
+
+```json
+{
+  "ultrachat_200k": {
+    "hf_hub_url": "HuggingFaceH4/ultrachat_200k",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  }
+}
+```
+
+### Tool/Function Calling
+
+Datasets with tool definitions:
+
+```json
+{
+  "glaive_toolcall_en": {
+    "hf_hub_url": "llamafactory/glaive_toolcall_en",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "tools": "tools"
+    }
+  }
+}
+```
+
+### Multimodal (Vision)
+
+Datasets with images:
+
+```json
+{
+  "llava_1k_en": {
+    "hf_hub_url": "BUAADreamer/llava-en-zh-2k",
+    "subset": "en",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "images"
+    }
+  }
+}
+```
+
+### Preference (DPO)
+
+Datasets for preference training:
+
+```json
+{
+  "dpo_mix_en": {
+    "hf_hub_url": "llamafactory/DPO-En-Zh-20k",
+    "subset": "en",
+    "ranking": true,
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations",
+      "chosen": "chosen",
+      "rejected": "rejected"
+    }
+  }
+}
+```
+
+### KTO Format
+
+Datasets for Kahneman-Tversky Optimization:
+
+```json
+{
+  "kto_mix_en": {
+    "hf_hub_url": "argilla/kto-mix-15k",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "completion",
+      "kto_tag": "label"
+    }
+  }
+}
+```
+
+### Pretraining
+
+Large text corpora:
+
+```json
+{
+  "wikipedia_en": {
+    "hf_hub_url": "olm/olm-wikipedia-20221220",
+    "columns": {
+      "prompt": "text"
+    }
+  }
+}
+```
+
+---
+
+## Examples
+
+### Example 1: Local File Dataset
+
+```json
+{
+  "my_dataset": {
+    "file_name": "my_data.json",
+    "columns": {
+      "prompt": "question",
+      "response": "answer"
+    }
+  }
+}
+```
+
+### Example 2: Hugging Face Hub Dataset with System Prompt
+
+```json
+{
+  "my_dataset": {
+    "hf_hub_url": "username/dataset-name",
+    "split": "train",
+    "columns": {
+      "prompt": "instruction",
+      "response": "output",
+      "system": "system_message"
+    }
+  }
+}
+```
+
+### Example 3: ShareGPT Format with Multiple Hubs
+
+```json
+{
+  "my_dataset": {
+    "hf_hub_url": "username/dataset-hf",
+    "ms_hub_url": "username/dataset-ms",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "conversations"
+    },
+    "tags": {
+      "role_tag": "from",
+      "content_tag": "value",
+      "user_tag": "human",
+      "assistant_tag": "gpt"
+    }
+  }
+}
+```
+
+### Example 4: Multimodal with Vision
+
+```json
+{
+  "my_vision_dataset": {
+    "hf_hub_url": "username/vision-dataset",
+    "formatting": "sharegpt",
+    "columns": {
+      "messages": "messages",
+      "images": "image_paths"
+    },
+    "tags": {
+      "role_tag": "role",
+      "content_tag": "content",
+      "user_tag": "user",
+      "assistant_tag": "assistant"
+    }
+  }
+}
+```
+
+### Example 5: DPO Preference Dataset
+
+```json
+{
+  "my_preference_dataset": {
+    "hf_hub_url": "username/preference-data",
+    "ranking": true,
+    "columns": {
+      "prompt": "question",
+      "chosen": "best_answer",
+      "rejected": "worst_answer"
+    }
+  }
+}
+```
+
+---
+
+## Best Practices
+
+1. **Naming Conventions**: Use descriptive, lowercase names with underscores (e.g., `alpaca_gpt4_en`)
+
+2. **Multiple Hub Support**: Provide both `hf_hub_url` and `ms_hub_url` when possible for better accessibility
+
+3. **Column Mapping**: Always specify column mappings explicitly to avoid confusion
+
+4. **Dataset Splits**: Use the `split` field to specify train/validation/test splits
+
+5. **Subsets**: Use the `subset` field for datasets with multiple configurations
+
+6. **Documentation**: Keep demo versions of datasets for testing (e.g., `*_demo` suffix)
+
+7. **Localization**: Use language suffixes for localized datasets (e.g., `_en`, `_zh`, `_de`)
+
+---
+
+## Notes
+
+- For file-based datasets, ensure the file exists in the correct directory
+- Hub URLs should point to valid dataset repositories
+- The `formatting` field determines how the data is parsed
+- Preference datasets (`ranking: true`) require both `chosen` and `rejected` columns
+- Multimodal datasets require appropriate column mappings for media files
+
+---
+
+*Last Updated: October 2025*
+
+
+
+
+
+
+
+
+
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------
+-------------------------------------------------------------
+--------------------------------------------------------------------
+---------------------------------------------------
+--------------------------------------
+---------------------------------------------------------------
+==================================================================================
+
+
+
+
 The `dataset_info.json` file should be put in the `dataset_dir` directory. You can change `dataset_dir` to use another directory. The default value is `./data`.
 
 Currently we support datasets in **alpaca** and **sharegpt** format. Allowed file types include json, jsonl, csv, parquet, arrow.
