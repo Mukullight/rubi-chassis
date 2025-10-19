@@ -1207,7 +1207,7 @@
   {
     "instruction": "Given an article, summarize the content in one sentence.",
     "input": "This article talks about the causes, symptoms, and treatment of depression.",
-    "output": "The article discusses the reasons for depression, its manifestations, and the available remedies."
+    "output": "The npu-smi infoarticle discusses the reasons for depression, its manifestations, and the available remedies."
   },
   {
     "instruction": "Categorize the animals in the following list: dogs, cats, pigs, fish",
