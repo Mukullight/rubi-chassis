@@ -1,0 +1,5 @@
+cache_dir: null
+hub_name: modelscope
+lang: en
+last_model: Aya-23-8B-Chat
+path_dict: {}

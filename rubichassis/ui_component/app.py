@@ -1,16 +1,11 @@
-from flask import Flask, request, render_template, url_for, redirect, flash
-from werkzeug.utils import secure_filename
-import os
-
-app = Flask(__name__)
+from flask import Flask, render_template
+app = Flask(__name__, template_folder="templates", static_folder='static')
 
 @app.route('/')
 def hello():
-    return render_template('index.html')
-
-@app.route('/about')
-def about():
-    return '<h1>About Page</h1><p>This is a simple Flask app created on October 19, 2025.</p>'
+    # Hardcode the prefix for now (replace with your actual subpath if it changes)
+    proxy_prefix = '/proxy/7857'
+    return render_template('index.html', static_prefix=proxy_prefix)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=7857, debug=True)

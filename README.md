@@ -189,7 +189,7 @@ To launch and **Run** the interface
 
 
 ```sh 
-llamafactorycli-webui
+llamafactory-cli webui
 ```
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
